@@ -120,6 +120,8 @@ class GitChangelog(GitDirectiveBase):
         'hide_details': bool,
         'repo-dir': six.text_type,
         'path': directives.path,
+        'first_parent': bool,
+        'no_merges': bool,
     }
 
     def run(self):
@@ -139,9 +141,14 @@ class GitChangelog(GitDirectiveBase):
         return commits
 
     def _filter_commits(self, repo):
+        first_parent = 'first_parent' in self.options
+        no_merges = 'no_merges' in self.options
+
         commits = repo.iter_commits(
             rev=self.options.get('rev-list', None),
             paths=self.options.get('path', ''),
+            first_parent=first_parent,
+            no_merges=no_merges,
         )
         if 'rev-list' not in self.options:
             revisions_to_display = self.options.get('revisions', 10)

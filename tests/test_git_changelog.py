@@ -311,6 +311,57 @@ class TestWithRepository(ChangelogTestCase):
         assert_equal('commit to file in {}'.format(dirname_ut),
                      par_children[0].text)
 
+    def _merge_test_setup(self):
+        self.repo.index.commit('initial')
+        original_branch = self.repo.active_branch
+
+        # Create a new branch and add a commit to it
+        new_branch = self.repo.create_head('newbranch')
+        new_branch.checkout()
+        file_path = os.path.join(self.repo.working_tree_dir, 'test.txt')
+        f = open(file_path, 'w+')
+        f.close()
+        self.repo.index.add([file_path])
+        self.repo.index.commit('regular commit')
+
+        # Merge the new branch into the original branch
+        original_branch.checkout()
+        base = self.repo.merge_base(original_branch, new_branch)
+        self.repo.index.merge_tree(new_branch, base=base)
+        parent_commits = (original_branch.commit, new_branch.commit)
+        self.repo.index.commit('merge commit', parent_commits=parent_commits)
+
+    def test_merge_commit_show_first_parent_only(self):
+        self._merge_test_setup()
+
+        self.changelog.options.update({'first_parent': True})
+        nodes = self.changelog.run()
+        assert_equal(1, len(nodes))
+        list_markup = BeautifulSoup(str(nodes[0]), features='xml')
+        assert_equal(1, len(list_markup.findAll('bullet_list')))
+        bullet_list = list_markup.bullet_list
+        # Expect the initial commit & the merge commit
+        assert_equal(2, len(bullet_list.findAll('list_item')))
+        # Verify the regular commit is not in the changelog
+        for child in bullet_list.childGenerator():
+            assert_not_in('regular commit', child.text)
+
+    def test_merge_commit_show_no_merges(self):
+        self._merge_test_setup()
+
+        # Test git changelog
+        self.changelog.options.update({'no_merges': True})
+        nodes = self.changelog.run()
+        assert_equal(1, len(nodes))
+        list_markup = BeautifulSoup(str(nodes[0]), features='xml')
+        assert_equal(1, len(list_markup.findAll('bullet_list')))
+        bullet_list = list_markup.bullet_list
+        # Expect the initial commit & the regular commit
+        assert_equal(2, len(bullet_list.findAll('list_item')))
+        # Verify the merge commit is not in the changelog
+        for child in bullet_list.childGenerator():
+            assert_not_in('merge commit', child.text)
+
 
 class TestWithOtherRepository(TestWithRepository):
     """

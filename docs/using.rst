@@ -78,8 +78,23 @@ will accept.  See `the man page`_ for details.
 
     Sphinx will output a warning if you specify both.
 
-Filter Revisons to Matching Only Certain Files Based on Filenames
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Filter Revisions to Match Only a Single Directory or File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you only want to see the changelog regarding to a certain directory or file
+you can use the ``:path:`` argument with ``git_changelog``.
+``:path:`` expects a path to the directory or file you want to filter on, either
+as an absolute path or as a relative path from the working directory. So::
+
+    .. git_changelog::
+        :path: doc/
+
+will show all commits that modified files in the ``doc/`` directory.
+
+
+Filter Revisions to Matching Only Certain Files Based on Filenames
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you only want to see the changelog regarding certain files (eg. for devops
 reasons you need to have both SaSS and CSS in your repository or you only want
@@ -156,6 +171,32 @@ for example:
 
     .. git_changelog::
         :detailed-message-strong: False
+
+
+Hiding merge commits
+~~~~~~~~~~~~~~~~~~~~
+
+If you want to hide merge commits from the changelog,
+then you can add the ``:no_merges:`` argument. So::
+
+    .. git_changelog::
+        :no_merges:
+
+will hide all commits that have more than one parent.
+
+
+Showing only the first parent commits
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want the changelog to only display the first parents of commits
+(e.g. your main branch has been merged into a lot and you don't want to
+see the individual commits that came from other branches), then you can
+add the ``:first_parent:`` argument. So::
+
+    .. git_changelog::
+        :first_parent:
+
+will only show the first parent of merge commits.
 
 
 git_commit_detail Directive

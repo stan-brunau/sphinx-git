@@ -280,6 +280,37 @@ class TestWithRepository(ChangelogTestCase):
         assert_not_in(' at ', par_children[1].text)
         assert_in(' by ', par_children[1].text)
 
+    def test_path_filter(self):
+        self.repo.index.commit('initial')
+        dirnames = ['dir1', 'dir2']
+        for dirname in dirnames:
+            full_dir_path = os.path.join(self.repo.working_tree_dir, dirname)
+            os.mkdir(full_dir_path)
+            full_file_path = os.path.join(full_dir_path, 'test.txt')
+            f = open(full_file_path, 'w+')
+            f.close()
+            self.repo.index.add([full_file_path])
+            self.repo.index.commit('commit to file in {}'.format(dirname))
+        self.repo.index.commit('commit without file in a specific directory')
+
+        dirname_ut = dirnames[0]
+        self.changelog.options.update({'path': "{}/".format(dirname_ut)})
+        nodes = self.changelog.run()
+        assert_equal(1, len(nodes))
+        list_markup = BeautifulSoup(str(nodes[0]), features='xml')
+        assert_equal(1, len(list_markup.findAll('bullet_list')))
+
+        bullet_list = list_markup.bullet_list
+        assert_equal(1, len(bullet_list.findAll('list_item')), nodes)
+
+        item = list_markup.bullet_list.list_item
+        children = list(item.childGenerator())
+        assert_equal(1, len(children))
+        par_children = list(item.paragraph.childGenerator())
+        assert_equal(5, len(par_children))
+        assert_equal('commit to file in {}'.format(dirname_ut),
+                     par_children[0].text)
+
 
 class TestWithOtherRepository(TestWithRepository):
     """

@@ -119,6 +119,7 @@ class GitChangelog(GitDirectiveBase):
         'hide_date': bool,
         'hide_details': bool,
         'repo-dir': six.text_type,
+        'path': directives.path,
     }
 
     def run(self):
@@ -138,10 +139,11 @@ class GitChangelog(GitDirectiveBase):
         return commits
 
     def _filter_commits(self, repo):
-        if 'rev-list' in self.options:
-            commits = repo.iter_commits(rev=self.options['rev-list'])
-        else:
-            commits = repo.iter_commits()
+        commits = repo.iter_commits(
+            rev=self.options.get('rev-list', None),
+            paths=self.options.get('path', ''),
+        )
+        if 'rev-list' not in self.options:
             revisions_to_display = self.options.get('revisions', 10)
             commits = list(commits)[:revisions_to_display]
         if 'filename_filter' in self.options:
